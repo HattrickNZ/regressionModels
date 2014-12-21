@@ -1,0 +1,242 @@
+---
+title: "Project Regression Models"
+autor: "KS"
+date: "Friday, December 19, 2014"
+output: pdf_document
+---
+
+#Executive Summary
+
+Working in the Motor Trend industry raises many questions. Here we are looking at manual cars versus automatics. Looking at a data set of a collection of cars(mtcars), we are interested in exploring the relationship between a set of variables and MPG (outcome). In this document of particualr interest are the questions:
+
+- “Is an automatic or manual transmission better for MPG”
+- "Quantify the MPG difference between automatic and manual transmissions"
+
+In our analysis we can see that the mpg is greater for manual comapared with automatic motor vehicles. 
+
+#Details
+
+```{r echo=FALSE, results="hide"}
+d <- as.data.frame(mtcars)  # get my data
+
+# explore my data
+dim(d) 
+head(d)
+summary(d)
+
+# Sort my data for manuipulation
+y_mpg<-d$mpg
+x_man_aut<-d$am  # automatic = 0# manaual =1
+y_mpg
+x_man_aut
+
+## some more data manipulation 
+dat<-data.frame(x_man_aut,y_mpg) # make a dataframe
+# add a column based on a critereia
+dat$ManAut <- ifelse(dat$x_man_aut ==0, "Automatic", "Manual")
+# make a gglot from this 
+
+##dat_man<-subset(dat,ManAut=="Manual") another way of doing this 
+dat_man<-dat[dat$ManAut=="Manual",]
+dat_aut<-dat[dat$ManAut=="Automatic",]
+dim(dat)
+
+dim(dat_man)
+dim(dat_aut)
+
+## look at the means for automatic and manual
+mean(dat_man$y_mpg)
+mean(dat_aut$y_mpg)
+
+### Sort the max at top 
+dat_man<-dat_man[with(dat_man, order(-y_mpg)),]
+dat_aut<-dat_aut[with(dat_aut, order(-y_mpg)),]
+
+
+## take the top 5 for one model of the dfs
+t5_man<-dat_man[1:5,]
+t5_aut<-dat_aut[1:5,]
+
+
+## combine these dfs
+t5_manaut<-rbind(t5_man,t5_aut)
+
+## TRY THIS PLOT ++  this can be a red model of the top 5 for aut and man 
+
+
+### GET THE BOTTOM 5 
+b5_man<-dat_man[(nrow(dat_man)-5):nrow(dat_man),]
+b5_aut<-dat_aut[(nrow(dat_aut)-5):nrow(dat_aut),]
+
+
+## combine these dfs
+b5_manaut<-rbind(b5_man,b5_aut)
+
+
+### RE-Sort so the min is at the top for the next model 
+dat_man<-dat_man[with(dat_man, order(-y_mpg)),]
+dat_aut<-dat_aut[with(dat_aut, order(-y_mpg)),]
+
+
+## add an n column to my dfs
+dat_aut$n<-1:nrow(dat_aut)
+dat_man$n<-1:nrow(dat_man)
+
+
+## TRY THIS PLOT ++  this can be a blue model of the bottom 5 for aut and man 
+
+
+### BUILD My MODELS
+fit<-lm(y_mpg~x_man_aut)
+## for top 5
+fit_t5<-lm(t5_manaut$y_mpg~t5_manaut$x_man_aut)
+## for bottom 5
+fit_b5<-lm(b5_manaut$y_mpg~b5_manaut$x_man_aut)
+
+
+### Build more models 
+
+fit_man<-lm(dat_man$y_mpg~dat_man$n)
+fit_aut<-lm(dat_aut$y_mpg~dat_aut$n)
+
+
+## look at the coefficients 
+
+## look at the summarys for comparison
+summary(fit)
+summary(fit_t5)
+summary(fit_b5)
+
+## look at the anovas for comparison 
+anova(fit)
+anova(fit_t5)
+anova(fit_b5)
+
+```
+
+
+Here I will look at the plots of manual cars versus automatics for miles per gallon.
+
+
+```{r echo=F}
+### PUT MY PLOT CODE IN HERE THAT I WANT TO BE VISIBLE 
+
+par(mfrow=c(1,2)) # 1 row 2 columns of plots 
+
+################### DO PLOT 1 
+
+plot(dat$x_man_aut,dat$y_mpg,pch=21,col="black",bg="black",main="MPG V Automatic/Manual(T5/B5)",xlab="Transmission(0=automatic,1=manual)",ylab="Miles/(US) gallon[mpg]") # this will already have been plotted 
+points(t5_manaut$x_man_aut,t5_manaut$y_mpg ,pch=21,col=((t5_manaut$x_man_aut=="1" | t5_manaut$x_man_aut=="0")*1+1),bg="black")
+points(b5_manaut$x_man_aut,b5_manaut$y_mpg ,pch=21,col=((b5_manaut$x_man_aut=="1" | b5_manaut$x_man_aut=="0")*1+2),bg="black")
+## abline for them all 
+abline(fit,col="black",lwd=2) # this is one model 
+## for top 5
+abline(fit_t5,col="red",lwd=2) # this is one model 
+## for bottom 5
+abline(fit_b5,col="green",lwd=2) # this is one model 
+
+## Add legend 
+legend("topleft",lty=1 , pch=21,col = c("red","black", "green"), legend = c("Top 5", "All","Bottom 5"))
+
+##################### DO PLOT 2 
+
+## do another plot 
+plot(jitter(dat_aut$n),dat_aut$y_mpg,pch=19,ylim=c(min(dat_aut$y_mpg),max(dat_man$y_mpg)),main="MPG V Automatic/Manual",xlab="n=1...19",ylab="Miles/(US) gallon[mpg]")  ##use jitter to show >1 points
+points(jitter(dat_man$n),dat_man$y_mpg,pch=19,col="red")
+
+## add the models to the plots 
+abline(fit_man,col="red")
+abline(fit_aut)
+## Add legend 
+legend("topright",lty=1 , pch=19,col = c("red","black"), legend = c("Manual", "Automatic"))
+
+```
+**Figure 1:**
+
+MPG V Automatic/Manual (Top5/Bottom5): A look at the miles per gallon per automatic/manaul transmission motor vehicle. The top 5 and bottom 5 are also looked at here.
+
+MPG V Automatic/Manual: An alternative look at the miles per gallon per automatic/manaul transmission motor vehicle.   
+
+
+```{r echo=FALSE, results="hide"}
+## Here we look at the coefficients 
+
+## look at the summarys for comparison
+summary(fit)$coeff
+summary(fit_t5)$coeff
+summary(fit_b5)$coeff
+
+## look at the anovas for comparison 
+anova(fit)
+anova(fit_t5)
+anova(fit_b5)
+
+```
+
+
+From the MPG V Automatic/Manual graph in Figure 1 we can look at the coefficients of the 2 models 
+
+```{r}
+
+## look at the summarys for comparison
+summary(fit_man)$coeff
+summary(fit_aut)$coeff
+
+## look at the anovas for comparison 
+anova(fit_man)
+anova(fit_aut)
+
+```
+
+From this we can say: 
+
+- manual appears to give better mpg compare with automatic 
+- a note on the the p-values 
+- a note a confidence intervals 
+- a note on the different models 
+- other notes 
+
+
+**Note: The code for this entire documaent can be found [here](https://github.com/HattrickNZ/regressionModels) **
+
+
+#Appendix 
+
+```{r echo=FALSE}
+library(datasets); data(mtcars); require(stats); require(graphics)
+pairs(mtcars, panel = panel.smooth, main = "mtcars data", col = 3)
+```
+
+**Figure A1:** A look at all the mtcars data.
+
+
+
+
+
+```{r echo=FALSE, results="hide"}
+# TO DELETE
+## this is how the project will be greaded!!!
+
+
+#1. Did you interpret your coefficients correctly?
+
+#2. Did you do some exploratory data analyses?
+
+#3. Did you fit multiple models and detail your strategy for model selection?
+
+#4. Did you answer the questions of interest or detail why the question(s) 
+#is (are) not answerable?
+
+#5. Did you do a residual plot and some diagnostics?
+
+#6. Did you quantify the uncertainty in your conclusions and/or perform an inference correctly?
+
+#7. Did you communicate your findings?
+
+#8. Was the report brief (about 2 pages long)?
+
+#9. Did it include an executive summary? see above 
+
+#10. Was the report done in Rmd (knitr)?
+
+```
